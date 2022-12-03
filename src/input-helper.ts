@@ -39,9 +39,9 @@ export function getInputs(): ICheckerArguments {
 }
 
 export function checkArgs(args: ICheckerArguments): void {
-  // Check arguments
   if (args.pattern.length === 0) {
     throw new Error(`PATTERN not defined.`)
+    // Check arguments
   }
 
   const regex = new RegExp('[^gimsuy]', 'g')

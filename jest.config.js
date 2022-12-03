@@ -1,4 +1,8 @@
 module.exports = {
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  coverageProvider: 'v8',
+  coverageReporters: ['html', 'text'],
   clearMocks: true,
   moduleFileExtensions: ['js', 'ts'],
   testEnvironment: 'node',
