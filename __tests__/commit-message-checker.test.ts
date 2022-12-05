@@ -29,28 +29,6 @@ describe('commit-message-checker tests', () => {
     commitMessageChecker = require('../src/commit-message-checker')
   })
 
-  xit('requires pattern', async () => {
-    const checkerArguments: ICheckerArguments = {
-      pattern: '',
-      flags: '',
-      error: ''
-    }
-    await expect(
-      commitMessageChecker.checkCommitMessages(checkerArguments)
-    ).rejects.toThrow('PATTERN not defined.')
-  })
-
-  xit('requires valid flags', async () => {
-    const checkerArguments: ICheckerArguments = {
-      pattern: 'some-pattern',
-      flags: 'abcdefgh',
-      error: ''
-    }
-    await expect(
-      commitMessageChecker.checkCommitMessages(checkerArguments)
-    ).rejects.toThrow("Invalid flags supplied to RegExp constructor 'abcdefgh'")
-  })
-
   it('check fails single message', async () => {
     const checkerArguments: ICheckerArguments = {
       pattern: 'some-pattern',
