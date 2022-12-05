@@ -2,9 +2,17 @@ name: 'Commit Message Checker for pull request'
 description: 'Check the commit message in pr against a regex pattern'
 author: 'Tim'
 inputs:
-  commits:
-    description: 'commits in json format'
+  token:
+    description: 'A token with access to your repository scoped in as a secret'
     required: true
+  filter_out_pattern:
+    description: 'A regex pattern to check if a commit should be filtered out, empty for disable'
+    required: false
+    default: ""
+  filter_out_flags:
+    description: 'Regex flags of input filter_out_pattern'
+    required: false
+    default: ''
   pattern:
     description: 'A regex pattern to check if a commit message is valid.'
     required: true
@@ -29,8 +37,8 @@ inputs:
     default: "false"
 
 runs:
-  using: node16
-  main: dist/index.js
+  using: 'node16'
+  main: 'dist/index.js'
 branding:
   icon: 'check'
   color: 'blue'

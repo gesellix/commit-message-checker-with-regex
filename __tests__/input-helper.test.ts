@@ -26,7 +26,7 @@ let inputHelper: any
 
 // Mock @actions/core
 let inputs = {} as any
-const mockCore = jest.genMockFromModule('@actions/core') as any
+const mockCore: any = jest.genMockFromModule('@actions/core')
 mockCore.getInput = (name: string, options?: InputOptions) => {
   const val = inputs[name] || ''
   if (options && options.required && !val) {
@@ -36,7 +36,7 @@ mockCore.getInput = (name: string, options?: InputOptions) => {
 }
 
 // Mock @actions/github
-const mockGitHub = jest.genMockFromModule('@actions/github') as any
+const mockGitHub: any = jest.genMockFromModule('@actions/github')
 mockGitHub.context = {}
 
 describe('input-helper tests', () => {
@@ -46,7 +46,7 @@ describe('input-helper tests', () => {
     jest.setMock('@actions/github', mockGitHub)
 
     // Now import
-    inputHelper = require('../lib/input-helper')
+    inputHelper = require('../src/input-helper')
   })
 
   beforeEach(() => {
@@ -73,25 +73,6 @@ describe('input-helper tests', () => {
     }).toThrow('Input required and not supplied: error')
   })
 
-  it('requires event', () => {
-    inputs.pattern = 'some-pattern'
-    inputs.error = 'some-error'
-    expect(() => {
-      const checkerArguments: ICheckerArguments = inputHelper.getInputs()
-    }).toThrow('Event "undefined" is not supported.')
-  })
-
-  it('requires valid event', () => {
-    mockGitHub.context = {
-      eventName: 'some-event'
-    }
-    inputs.pattern = 'some-pattern'
-    inputs.error = 'some-error'
-    expect(() => {
-      const checkerArguments: ICheckerArguments = inputHelper.getInputs()
-    }).toThrow('Event "some-event" is not supported.')
-  })
-
   it('sets flags', () => {
     mockGitHub.context = {
       eventName: 'pull_request',
@@ -107,23 +88,6 @@ describe('input-helper tests', () => {
     inputs.error = 'some-error'
     const checkerArguments: ICheckerArguments = inputHelper.getInputs()
     expect(checkerArguments.flags).toBe('abcdefgh')
-  })
-
-  it('requires pull_request payload', () => {
-    mockGitHub.context = {
-      eventName: 'pull_request',
-      payload: {
-        pull_request: {
-          title: '',
-          body: ''
-        }
-      }
-    }
-    inputs.pattern = 'some-pattern'
-    inputs.error = 'some-error'
-    expect(() => {
-      const checkerArguments: ICheckerArguments = inputHelper.getInputs()
-    }).toThrow('No pull_request found in the payload.')
   })
 
   it('sets correct pull_request title payload', () => {
@@ -142,8 +106,6 @@ describe('input-helper tests', () => {
     expect(checkerArguments).toBeTruthy()
     expect(checkerArguments.pattern).toBe('some-pattern')
     expect(checkerArguments.error).toBe('some-error')
-    expect(checkerArguments.messages).toBeTruthy()
-    expect(checkerArguments.messages[0]).toBe('some-title')
   })
 
   it('sets correct pull_request title and body payload', () => {
@@ -162,34 +124,6 @@ describe('input-helper tests', () => {
     expect(checkerArguments).toBeTruthy()
     expect(checkerArguments.pattern).toBe('some-pattern')
     expect(checkerArguments.error).toBe('some-error')
-    expect(checkerArguments.messages).toBeTruthy()
-    expect(checkerArguments.messages[0]).toBe('some-title\n\nsome-body')
-  })
-
-  it('requires push payload', () => {
-    mockGitHub.context = {
-      eventName: 'push',
-      payload: {}
-    }
-    inputs.pattern = 'some-pattern'
-    inputs.error = 'some-error'
-    expect(() => {
-      const checkerArguments: ICheckerArguments = inputHelper.getInputs()
-    }).toThrow('No commits found in the payload.')
-  })
-
-  it('requires push payload commits', () => {
-    mockGitHub.context = {
-      eventName: 'push',
-      payload: {
-        commits: {}
-      }
-    }
-    inputs.pattern = 'some-pattern'
-    inputs.error = 'some-error'
-    expect(() => {
-      const checkerArguments: ICheckerArguments = inputHelper.getInputs()
-    }).toThrow('No commits found in the payload.')
   })
 
   it('sets correct single push payload', () => {
@@ -209,8 +143,6 @@ describe('input-helper tests', () => {
     expect(checkerArguments).toBeTruthy()
     expect(checkerArguments.pattern).toBe('some-pattern')
     expect(checkerArguments.error).toBe('some-error')
-    expect(checkerArguments.messages).toBeTruthy()
-    expect(checkerArguments.messages[0]).toBe('some-message')
   })
 
   it('sets correct multiple push payload', () => {
@@ -233,8 +165,76 @@ describe('input-helper tests', () => {
     expect(checkerArguments).toBeTruthy()
     expect(checkerArguments.pattern).toBe('some-pattern')
     expect(checkerArguments.error).toBe('some-error')
-    expect(checkerArguments.messages).toBeTruthy()
-    expect(checkerArguments.messages[0]).toBe('some-message')
-    expect(checkerArguments.messages[1]).toBe('other-message')
+  })
+
+  it('requires pattern', async () => {
+    const checkerArguments: ICheckerArguments = {
+      pattern: '',
+      flags: '',
+      error: ''
+    }
+
+    expect(() => {
+      inputHelper.checkArgs(checkerArguments)
+    }).toThrow('PATTERN not defined.')
+  })
+
+  it('requires valid flags', async () => {
+    const checkerArguments: ICheckerArguments = {
+      pattern: 'some-pattern',
+      flags: 'abcdefgh',
+      error: ''
+    }
+    expect(() => {
+      inputHelper.checkArgs(checkerArguments)
+    }).toThrow('FLAGS contains invalid characters "abcdefh".')
+  })
+
+  it('requires valid error message', async () => {
+    const checkerArguments: ICheckerArguments = {
+      pattern: 'some-pattern',
+      flags: 'g',
+      error: ''
+    }
+    expect(() => {
+      inputHelper.checkArgs(checkerArguments)
+    }).toThrow('ERROR not defined.')
+  })
+
+  it('should throw error message on genOutput', async () => {
+    expect(() => {
+      inputHelper.genOutput()
+    }).toThrow("Cannot read properties of undefined (reading 'map')")
+  })
+
+  it('should return error message on genOutput', async () => {
+    const attributes = {
+      commitInfos: [
+        {
+          sha: 'aaaaaaa1111',
+          message: 'message1'
+        },
+        {
+          sha: 'bbbbbbb2222',
+          message: 'message2'
+        }
+      ],
+      preErrorMsg: 'i am a preErrorMessage',
+      postErrorMSG: 'i am a posterrormessage'
+    }
+    const expected: any = inputHelper.genOutput(
+      attributes.commitInfos,
+      attributes.preErrorMsg,
+      attributes.postErrorMSG
+    )
+
+    expect(expected).toMatchInlineSnapshot(`
+      "i am a preErrorMessage
+
+        aaaaaaa1111    message1
+        bbbbbbb2222    message2
+
+      i am a posterrormessage"
+    `)
   })
 })

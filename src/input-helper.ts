@@ -15,11 +15,7 @@
  * was distributed with this source code.
  */
 
-/**
- * Imports
- */
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 import {ICheckerArguments} from './commit-message-checker'
 
 /**
@@ -28,7 +24,7 @@ import {ICheckerArguments} from './commit-message-checker'
  * @returns   ICheckerArguments
  */
 export function getInputs(): ICheckerArguments {
-  const result = ({} as unknown) as ICheckerArguments
+  const result = {} as unknown as ICheckerArguments
 
   // Get pattern
   result.pattern = core.getInput('pattern', {required: true})
@@ -42,31 +38,40 @@ export function getInputs(): ICheckerArguments {
   return result
 }
 
-export function checkArgs(args: any) {
+export function checkArgs(args: ICheckerArguments): void {
+  if (args.pattern.length === 0) {
+    throw new Error(`PATTERN not defined.`)
     // Check arguments
-    if (args.pattern.length === 0) {
-      throw new Error(`PATTERN not defined.`)
-    }
+  }
 
-    const regex = new RegExp('[^gimsuy]', 'g')
-    let invalidChars
-    let chars = ''
-    while ((invalidChars = regex.exec(args.flags)) !== null) {
-      chars += invalidChars[0]
-    }
-    if (chars !== '') {
-      throw new Error(`FLAGS contains invalid characters "${chars}".`)
-    }
+  const regex = new RegExp('[^gimsuy]', 'g')
+  let invalidChars
+  let chars = ''
+  while ((invalidChars = regex.exec(args.flags)) !== null) {
+    chars += invalidChars[0]
+  }
+  if (chars !== '') {
+    throw new Error(`FLAGS contains invalid characters "${chars}".`)
+  }
 
-    if (args.error.length === 0) {
-      throw new Error(`ERROR not defined.`)
-    }
+  if (args.error.length === 0) {
+    throw new Error(`ERROR not defined.`)
+  }
 }
 
-export function genOutput(commitInfos: any, preErrorMsg: string, postErrorMsg: string) {
-    const lines = commitInfos.map(function(info: any){return `  ${info.sha}    ${info.message}`})
+export function genOutput(
+  commitInfos: {sha: string; message: string}[],
+  preErrorMsg: string,
+  postErrorMsg: string
+): string {
+  const lines = commitInfos.map(function (info: {
+    sha: string
+    message: string
+  }) {
+    return `  ${info.sha}    ${info.message}`
+  })
 
-    const errors = `${lines.join('\n')}`
+  const errors = `${lines.join('\n')}`
 
-    return preErrorMsg + '\n\n' + errors + '\n\n' + postErrorMsg
+  return `${preErrorMsg}\n\n${errors}\n\n${postErrorMsg}`
 }
