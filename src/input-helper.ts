@@ -24,7 +24,7 @@ import {ICheckerArguments} from './commit-message-checker'
  * @returns   ICheckerArguments
  */
 export function getInputs(): ICheckerArguments {
-  const result = ({} as unknown) as ICheckerArguments
+  const result = {} as unknown as ICheckerArguments
 
   // Get pattern
   result.pattern = core.getInput('pattern', {required: true})
@@ -64,7 +64,10 @@ export function genOutput(
   preErrorMsg: string,
   postErrorMsg: string
 ): string {
-  const lines = commitInfos.map(function(info: {sha: string; message: string}) {
+  const lines = commitInfos.map(function (info: {
+    sha: string
+    message: string
+  }) {
     return `  ${info.sha}    ${info.message}`
   })
 

@@ -50,7 +50,6 @@ async function run(): Promise<void> {
     const commitsListed = await octokit.rest.pulls.listCommits({
       owner: repo.owner.login,
       repo: repo.name,
-      // eslint-disable-next-line @typescript-eslint/camelcase
       pull_number: pr.number
     })
 
