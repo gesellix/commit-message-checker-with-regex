@@ -15,21 +15,59 @@
  * was distributed with this source code.
  */
 
-/**
- * Imports
- */
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import * as inputHelper from './input-helper'
 import * as commitMessageChecker from './commit-message-checker'
 
-/**
- * Main function
- */
+const validEvent = ['pull_request']
+
 async function run(): Promise<void> {
   try {
+    const {
+      eventName,
+      payload: {repository: repo, pull_request: pr}
+    } = github.context
+
+    if (!validEvent.includes(eventName)) {
+      core.error(`Invalid event: ${eventName}`)
+      return
+    }
+    if (!repo) {
+      core.error(`Invalid repo: ${repo}`)
+      return
+    }
+    if (!pr) {
+      core.error(`Invalid pr: ${pr}`)
+      return
+    }
+
+    const token = core.getInput('token')
+    const filterOutPattern = core.getInput('filter_out_pattern')
+    const filterOutFlags = core.getInput('filter_out_flags')
+    const octokit = github.getOctokit(token)
+
+    const commitsListed = await octokit.rest.pulls.listCommits({
+      owner: repo.owner.login,
+      repo: repo.name,
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      pull_number: pr.number
+    })
+
+    let commits = commitsListed.data
+
+    if (filterOutPattern) {
+      const regex = new RegExp(filterOutPattern, filterOutFlags)
+      commits = commits.filter(({commit}) => {
+        return !regex.test(commit.message)
+      })
+    }
+
+    // core.setOutput('commits', JSON.stringify(commits))
+
     const onePassAllPass = core.getInput('one_pass_all_pass')
-    const commitsString = core.getInput('commits')
-    const commits = JSON.parse(commitsString)
+    // const commitsString = core.getInput('commits')
+    // const commits = JSON.parse(commitsString)
     const checkerArguments = inputHelper.getInputs()
 
     const preErrorMsg = core.getInput('pre_error')
@@ -39,7 +77,10 @@ async function run(): Promise<void> {
 
     for (const {commit, sha} of commits) {
       inputHelper.checkArgs(checkerArguments)
-      let errMsg = commitMessageChecker.checkCommitMessages(checkerArguments, commit.message)
+      const errMsg = commitMessageChecker.checkCommitMessages(
+        checkerArguments,
+        commit.message
+      )
 
       if (errMsg) {
         failed.push({sha, message: errMsg})
@@ -54,14 +95,10 @@ async function run(): Promise<void> {
       const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg)
       core.setFailed(summary)
     }
-
   } catch (error) {
-    core.error(error)
-    core.setFailed(error.message)
+    core.error(error as string | Error)
+    core.setFailed((error as Error).message)
   }
 }
 
-/**
- * Main entry point
- */
 run()
