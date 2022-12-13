@@ -1337,7 +1337,6 @@ function run() {
             const commitsListed = yield octokit.rest.pulls.listCommits({
                 owner: repo.owner.login,
                 repo: repo.name,
-                // eslint-disable-next-line @typescript-eslint/camelcase
                 pull_number: pr.number
             });
             let commits = commitsListed.data;
@@ -1352,11 +1351,11 @@ function run() {
             // const commitsString = core.getInput('commits')
             // const commits = JSON.parse(commitsString)
             const checkerArguments = inputHelper.getInputs();
+            inputHelper.checkArgs(checkerArguments);
             const preErrorMsg = core.getInput('pre_error');
             const postErrorMsg = core.getInput('post_error');
             const failed = [];
             for (const { commit, sha } of commits) {
-                inputHelper.checkArgs(checkerArguments);
                 const errMsg = commitMessageChecker.checkCommitMessages(checkerArguments, commit.message);
                 if (errMsg) {
                     failed.push({ sha, message: errMsg });
@@ -1364,6 +1363,10 @@ function run() {
             }
             if (onePassAllPass === 'true' && commits.length > failed.length) {
                 return;
+            }
+            const errMsg = commitMessageChecker.checkCommitMessages(checkerArguments, pr.title);
+            if (errMsg) {
+                failed.push({ sha: 'pull request title', message: errMsg });
             }
             if (failed.length > 0) {
                 const summary = inputHelper.genOutput(failed, preErrorMsg, postErrorMsg);
