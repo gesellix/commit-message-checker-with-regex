@@ -68,7 +68,6 @@ async function run(): Promise<void> {
     // const commitsString = core.getInput('commits')
     // const commits = JSON.parse(commitsString)
     const checkerArguments = inputHelper.getInputs()
-    inputHelper.checkArgs(checkerArguments)
 
     const preErrorMsg = core.getInput('pre_error')
     const postErrorMsg = core.getInput('post_error')
@@ -76,10 +75,12 @@ async function run(): Promise<void> {
     const failed = []
 
     for (const {commit, sha} of commits) {
+      inputHelper.checkArgs(checkerArguments)
       const errMsg = commitMessageChecker.checkCommitMessages(
         checkerArguments,
         commit.message
       )
+
       if (errMsg) {
         failed.push({sha, message: errMsg})
       }
@@ -87,14 +88,6 @@ async function run(): Promise<void> {
 
     if (onePassAllPass === 'true' && commits.length > failed.length) {
       return
-    }
-
-    const errMsg = commitMessageChecker.checkCommitMessages(
-      checkerArguments,
-      pr.title
-    )
-    if (errMsg) {
-      failed.push({sha: 'pull request title', message: errMsg})
     }
 
     if (failed.length > 0) {
