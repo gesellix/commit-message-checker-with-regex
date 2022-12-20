@@ -36,7 +36,9 @@ export function checkCommitMessages(
   args: ICheckerArguments,
   message: string
 ): string {
-  if (checkMessage(message, args.pattern, args.flags)) {
+  const lines = message.split('\n') || []
+  const firstLine = lines.length > 0 ? lines[0] : ''
+  if (checkMessage(firstLine, args.pattern, args.flags)) {
     return ''
   } else {
     return args.error
