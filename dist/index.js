@@ -663,7 +663,9 @@ exports.checkMessage = exports.checkCommitMessages = void 0;
  * @returns void
  */
 function checkCommitMessages(args, message) {
-    if (checkMessage(message, args.pattern, args.flags)) {
+    const lines = message.split('\n') || [];
+    const firstLine = lines.length > 0 ? lines[0] : '';
+    if (checkMessage(firstLine, args.pattern, args.flags)) {
         return '';
     }
     else {
@@ -1337,7 +1339,6 @@ function run() {
             const commitsListed = yield octokit.rest.pulls.listCommits({
                 owner: repo.owner.login,
                 repo: repo.name,
-                // eslint-disable-next-line @typescript-eslint/camelcase
                 pull_number: pr.number
             });
             let commits = commitsListed.data;
