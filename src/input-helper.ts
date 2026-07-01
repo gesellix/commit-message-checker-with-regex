@@ -16,7 +16,7 @@
  */
 
 import * as core from '@actions/core'
-import {ICheckerArguments} from './commit-message-checker'
+import {ICheckerArguments} from './commit-message-checker.js'
 
 /**
  * Gets the inputs set by the user and the messages of the event.

@@ -17,12 +17,12 @@
 
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import * as inputHelper from './input-helper'
-import * as commitMessageChecker from './commit-message-checker'
+import * as inputHelper from './input-helper.js'
+import * as commitMessageChecker from './commit-message-checker.js'
 
 const validEvent = ['pull_request']
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     const {
       eventName,

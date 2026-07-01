@@ -18,26 +18,22 @@
 /**
  * Imports
  */
-import {ICheckerArguments} from '../src/commit-message-checker'
-
-// Late bind
-let commitMessageChecker: any
+import {describe, it, expect} from 'vitest'
+import {
+  ICheckerArguments,
+  checkCommitMessages
+} from '../src/commit-message-checker'
 
 describe('commit-message-checker tests', () => {
-  beforeAll(() => {
-    // Now import
-    commitMessageChecker = require('../src/commit-message-checker')
-  })
-
   it('check fails single message', async () => {
     const checkerArguments: ICheckerArguments = {
       pattern: 'some-pattern',
       flags: '',
       error: 'some-error'
     }
-    expect(
-      commitMessageChecker.checkCommitMessages(checkerArguments, 'some-message')
-    ).toBe('some-error')
+    expect(checkCommitMessages(checkerArguments, 'some-message')).toBe(
+      'some-error'
+    )
   })
 
   it('check succeeds on single message', async () => {
@@ -46,8 +42,6 @@ describe('commit-message-checker tests', () => {
       flags: '',
       error: 'some-error'
     }
-    expect(
-      commitMessageChecker.checkCommitMessages(checkerArguments, 'some-message')
-    ).toBe('')
+    expect(checkCommitMessages(checkerArguments, 'some-message')).toBe('')
   })
 })
