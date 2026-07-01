@@ -94,6 +94,9 @@ typings/
 .DS_Store
 Thumbs.db
 
+# JetBrains IDE
+.idea
+
 # Ignore built ts files
 __tests__/runner/*
 lib/**/*
