@@ -54,6 +54,21 @@ jobs:
         id: tag
         run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
+      # Non-fatal: the tag is the source of truth for the action, but a
+      # mismatched package.json version is confusing. Warn (don't fail) since
+      # the release may already be published by the time this runs.
+      - name: Check package.json version matches tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          pkg_version="$(node -p "require('./package.json').version")"
+          expected="${TAG#v}"
+          if [ "$pkg_version" != "$expected" ]; then
+            echo "::warning::package.json version ($pkg_version) does not match tag ($TAG). Consider bumping it to $expected."
+          else
+            echo "package.json version matches tag ($TAG)."
+          fi
+
       # Idempotent: if the release already exists (e.g. created via the GitHub
       # Releases UI, which also creates the tag that triggered this run), skip
       # creation instead of failing with "tag_name already exists". A tag-only
