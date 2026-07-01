@@ -54,11 +54,19 @@ jobs:
         id: tag
         run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
+      # Idempotent: if the release already exists (e.g. created via the GitHub
+      # Releases UI, which also creates the tag that triggered this run), skip
+      # creation instead of failing with "tag_name already exists". A tag-only
+      # push or workflow_dispatch still gets a release created here.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skipping creation."
+            exit 0
+          fi
           prerelease=""
           case "$TAG" in
             *-*) prerelease="--prerelease" ;;
