@@ -26,6 +26,6 @@ jobs:
       - uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          pattern: '\[(BUGFIX|DOCS|FEATURE|TASK)\] .+$'
+          pattern: '\[(DEPS|BUGFIX|DOCS|FEATURE|TASK)\] .+$'
           error: 'Your first line has to contain a commit type like "[BUGFIX]".'
 ...
