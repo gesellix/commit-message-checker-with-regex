@@ -1,0 +1,36 @@
+# Because this is a bundled JS action, the committed dist/ must always match src/.
+# This guard rebuilds dist/ and fails if it differs from what is committed.
+name: "check-dist"
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run pack
+      - name: Compare committed dist/ with freshly built dist/
+        id: diff
+        run: |
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "::error::dist/ is out of date. Run 'npm run build && npm run pack' and commit the result."
+            git diff --stat dist/
+            exit 1
+          fi
+      # Upload the freshly built dist/ so it can be inspected if the check fails.
+      - if: ${{ failure() && steps.diff.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
