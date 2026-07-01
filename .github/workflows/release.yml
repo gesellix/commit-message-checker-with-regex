@@ -1,0 +1,70 @@
+# Publishes a GitHub Release for a version tag.
+#
+# Trigger either by:
+#   * pushing a tag that starts with "v", e.g.
+#       npm version patch   # bumps package.json + creates the tag
+#       git push --follow-tags
+#   * running this workflow manually (workflow_dispatch) against an existing tag,
+#     e.g. to re-create a release.
+#
+# The action is consumed as `uses: gesellix/commit-message-checker-with-regex@<tag>`
+# and runs the committed dist/index.js, so we verify dist/ is in sync before releasing.
+name: "release"
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)publish, e.g. v0.3.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run pack
+
+      - name: Verify dist/ is in sync with src/
+        run: |
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "::error::dist/ does not match src/ for this tag. Rebuild and commit dist/ before tagging."
+            git diff --stat dist/
+            exit 1
+          fi
+
+      - name: Resolve tag
+        id: tag
+        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          prerelease=""
+          case "$TAG" in
+            *-*) prerelease="--prerelease" ;;
+          esac
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --generate-notes \
+            $prerelease \
+            --verify-tag
